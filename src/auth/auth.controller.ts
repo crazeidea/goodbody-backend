@@ -1,7 +1,7 @@
 import { Body, ConflictException, Controller, NotFoundException, Post } from '@nestjs/common';
 import { UserService } from 'src/app/user/user.service';
-import { CreateUserDTO, LoginDTO, TokenDTO } from 'src/interface/dto/auth.dto';
-import { UserDTO } from 'src/interface/dto/user.dto';
+import { AccessTokenDTO, LoginDTO, RegisterDTO } from 'src/lib/dtos/auth.dto';
+import { UserDTO } from 'src/lib/dtos/user.dto';
 import { AuthService } from './auth.service';
 import { AuthUtil } from './auth.util';
 
@@ -14,9 +14,9 @@ export class AuthController {
         private authUtil: AuthUtil
     ) { }
 
-    @Post('signup')
+    @Post('register')
     async signup(
-        @Body() body: CreateUserDTO
+        @Body() body: RegisterDTO
     ): Promise<UserDTO> {
 
         const { username, password, passwordConfirm } = body;
@@ -27,7 +27,7 @@ export class AuthController {
 
         const checkUsername = await this.userService.getUserByUsername(username);
         if (checkUsername) {
-            throw new ConflictException('이 아이디는 사용할 수 없습니다.')
+            throw new ConflictException('이미 사용 중인 아이디 입니다.')
         }
 
         body.password = await this.authUtil.hash(password);
@@ -35,10 +35,10 @@ export class AuthController {
         return this.authService.createUser(body);
     }
 
-    @Post('signin')
+    @Post('login')
     async signin(
         @Body() body: LoginDTO
-    ): Promise<TokenDTO> {
+    ): Promise<AccessTokenDTO> {
         const { username, password } = body;
         const user = await this.userService.getUserByUsername(username);
         if (!user) {
